@@ -1,5 +1,6 @@
-# Service Worker
+# Push Notification Service Worker
 
+This is a work in progress...
 
 ## Getting Started
 
