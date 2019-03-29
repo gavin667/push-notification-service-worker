@@ -9,6 +9,7 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('push', function(event) {
   console.log('Push received');
   event.waitUntil(self.registration.showNotification('This is the notification title', {
+    //the response may be a string or json object so body could be "event.data.json()" or "event.data.text()"
     body: event.data.text(),
     icon: 'images/logo.png',
     badge: 'images/logo.png',

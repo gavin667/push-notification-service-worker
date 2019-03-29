@@ -5,7 +5,7 @@ const notificationOutput = document.querySelector('.push-notification__output');
 
 if ('serviceWorker' in navigator && 'PushManager' in window) {
   navigator.serviceWorker.register('/service-worker.js', {
-    scope: '/showroom/builds/',
+    scope: '/',
   }).then(function(registration) {
     console.log('Service Worker installed and activated: ', registration);
     registeredServiceWorker = registration;
@@ -17,8 +17,6 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
 }
 else {
   notificationBtn.textContent = 'Notifications are not supported.';
-
-  console.log('Either Service Worker or Push is not supported so a Service Worker has not been registered.');
 }
 
 function decideIfUserSubscribed() {
@@ -32,14 +30,12 @@ function decideIfUserSubscribed() {
   registeredServiceWorker.pushManager.getSubscription().then(subscription => {
     updateSubscriptionOnServer(subscription);
     if(subscription === null) {
-      console.log('User is NOT subscribed, ask the user to subscribe.');
       notificationBtn.textContent = 'Get notifications';
       notificationBtn.disabled = false;
       notificationBtn.classList.remove('btn--disabled');
       notificationBtn.addEventListener('click', subscribeUser);
     }
     else {
-      console.log('User is already subscribed');
       notificationBtn.textContent = 'User is already subscribed';
     }
   });
@@ -58,32 +54,34 @@ function subscribeUser() {
 
     notificationBtn.textContent = 'You\'re subscribed!';
     notificationBtn.removeEventListener('click', subscribeUser);
-
-    console.log('User is subscribed');
   }).catch(err => {
     notificationBtn.disabled = false;
     notificationBtn.classList.remove('btn--disabled');
     notificationBtn.textContent = 'Looks like something went wrong. Please try again.';
-    console.log("Could not subscribe the user to notifications: ", err);
   });
 }
 
 function updateSubscriptionOnServer(subscription) {
-  notificationOutput.textContent = JSON.stringify(subscription);
-  //send our subscription to a backend
+  const jsonSubscription = JSON.stringify(subscription);
+  const requestBody = JSON.parse(jsonSubscription);
+  //store subscription information
+  fetch('url-to-post-to.com', {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then(() => {
+    //post successful, do something
+  }).catch(err => {
+    Error(err);
+  });
 }
 
 function urlBase64ToUint8Array(base64String) {
-    var padding = '='.repeat((4 - base64String.length % 4) % 4);
-    var base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace('-', '+').replace('_', '/');
 
-    var rawData = window.atob(base64);
-    var outputArray = new Uint8Array(rawData.length);
-
-    for (var i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
